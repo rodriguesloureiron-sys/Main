@@ -1,0 +1,133 @@
+
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Astral Hub",
+    Icon = "snowflake",
+    Author = "made by snowbrkkkk - 74221148357881",
+    Folder = "Infinite Robux 9999+",
+    Size = UDim2.fromOffset(460, 260),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    
+    -- ↓ Optional. You can remove it.
+    --[[ You can set 'rbxassetid://' or video to Background.
+        'rbxassetid://':
+            Background = "rbxassetid://", -- rbxassetid
+        Video:
+            Background = "video:YOUR-RAW-LINK-TO-VIDEO.webm", -- video 
+    --]]
+    
+    -- ↓ Optional. You can remove it.
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            print("clicked")
+        end,
+    },
+})
+
+local Tab = Window:Tab({
+    Title = "Main",
+    Icon = "github",
+    Locked = false,
+})
+
+local Button = Tab:Button({
+    Title = "Auto Get Moon",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+loadstring(game:HttpGet("https://pastebin.com/raw/xuSMWfDu"))()
+
+-- Serviços
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local Camera = workspace.CurrentCamera
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
+
+-- 2️⃣ Fullbright
+Lighting.Ambient = Color3.new(1, 1, 1)
+Lighting.Brightness = 2
+Lighting.ClockTime = 14
+
+-- 3️⃣ Noclip
+RunService.Stepped:Connect(function()
+    for _, part in pairs(Character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end)
+
+-- 4️⃣ ESP do Plush_Moon dentro de workspace.Generators
+local plushMoon = workspace:WaitForChild("Generators"):WaitForChild("Plush_Moon")
+
+-- Highlight ESP
+local highlight = Instance.new("Highlight")
+highlight.Adornee = plushMoon
+highlight.FillColor = Color3.fromRGB(85, 170, 255)
+highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+highlight.FillTransparency = 0.5
+highlight.OutlineTransparency = 0
+highlight.Parent = game:GetService("CoreGui")
+
+-- Nome flutuando
+local nameText = Drawing.new("Text")
+nameText.Text = "Real Generator"
+nameText.Size = 20
+nameText.Color = Color3.fromRGB(255, 255, 255)
+nameText.Center = true
+nameText.Outline = true
+nameText.OutlineColor = Color3.fromRGB(0,0,0)
+
+RunService.RenderStepped:Connect(function()
+    if plushMoon and plushMoon.Parent then
+        local pos, onScreen = Camera:WorldToViewportPoint(plushMoon.Position + Vector3.new(0, plushMoon.Size.Y/2 + 1, 0))
+        if onScreen then
+            nameText.Position = Vector2.new(pos.X, pos.Y)
+            nameText.Visible = true
+        else
+            nameText.Visible = false
+        end
+    else
+        nameText.Visible = false
+    end
+end)
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Credits",
+    Icon = "rbxassetid://11577689639",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Hub Team",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Owner (Creator Of Hub)",
+    Desc = "Snowbrkkkk",
+    Color = "Grey",
+    Image = "rbxassetid://96977828844180",
+    ImageSize = 22,
+    Locked = true
+})
+
