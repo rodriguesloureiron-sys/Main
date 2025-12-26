@@ -1,0 +1,32 @@
+-- Coloque em StarterPlayerScripts
+local targetID = 133414174224457 
+
+if game.PlaceId ~= targetID then return end
+
+local StarterGui = game:GetService("StarterGui")
+
+-- Função para garantir que a notificação seja enviada (tenta até funcionar)
+-- Isso evita erros caso o jogo ainda esteja carregando
+local function sendNotification(title, text, duration)
+    task.spawn(function()
+        local success = false
+        while not success do
+            success, _ = pcall(function()
+                StarterGui:SetCore("SendNotification", {
+                    Title = title,
+                    Text = text,
+                    Duration = duration
+                })
+            end)
+            if not success then task.wait(0.5) end
+        end
+    end)
+end
+
+-- 1. Primeira notificação
+sendNotification("Astral Hub", "This minigame will never receive a script.", 5)
+
+task.wait(5)
+
+-- 2. Segunda notificação
+sendNotification("Astral Hub", "So please stop bothering me.", 3)
