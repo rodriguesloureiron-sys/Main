@@ -1,0 +1,74 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Astral Hub",
+    Icon = "snowflake",
+    Author = "Brutal Practice - 79589802006248",
+    Folder = "Infinite Robux 9999+",
+    Size = UDim2.fromOffset(460, 260),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    
+    -- ↓ Optional. You can remove it.
+    --[[ You can set 'rbxassetid://' or video to Background.
+        'rbxassetid://':
+            Background = "rbxassetid://", -- rbxassetid
+        Video:
+            Background = "video:YOUR-RAW-LINK-TO-VIDEO.webm", -- video 
+    --]]
+    
+    -- ↓ Optional. You can remove it.
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            print("clicked")
+        end,
+    },
+})
+
+local Tab = Window:Tab({
+    Title = "Main",
+    Icon = "github",
+    Locked = false,
+})
+
+local Button = Tab:Button({
+    Title = "Insta Get PigPatch & Happy Frog",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"win"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("EVENT_Server"):FireServer(unpack(args))
+
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Credits",
+    Icon = "rbxassetid://11577689639",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Hub Team",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Owner (Creator Of Hub)",
+    Desc = "Snowbrkkk",
+    Color = "Grey",
+    Image = "rbxassetid://96977828844180",
+    ImageSize = 22,
+    Locked = true
+})
