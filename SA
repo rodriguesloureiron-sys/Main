@@ -1,0 +1,1308 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Snowzinn Hub",
+    Icon = "cat",
+    Author = "by snowbrkkkk",
+    Folder = "Infinite Robux 9999+",
+    Size = UDim2.fromOffset(460, 260),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            print("clicked")
+        end,
+    },
+})
+
+
+local Tab = Window:Tab({
+    Title = "Main",
+    Icon = "rbxassetid://15567843390",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Farming",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local collecting = false
+local collectRadius = 5000
+
+-- player, root, character setup
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(char)
+    character = char
+    root = character:WaitForChild("HumanoidRootPart")
+end)
+
+-- função de coleta
+local function collectNearbyItems()
+    if not root or not root.Parent then return end
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Position - root.Position).Magnitude <= collectRadius then
+            for _, child in ipairs(obj:GetChildren()) do
+                if child:IsA("TouchTransmitter") then
+                    pcall(function()
+                        firetouchinterest(root, obj, 0)
+                        firetouchinterest(root, obj, 1)
+                    end)
+                end
+            end
+        end
+    end
+end
+
+-- loop da coleta
+task.spawn(function()
+    while true do
+        if collecting then
+            pcall(collectNearbyItems)
+        end
+        task.wait(0.3)
+    end
+end)
+
+-- toggle UI
+local Toggle = Tab:Toggle({
+    Title = "Auto get Item",
+    Desc = "Pick up all the items on the floor",
+    Icon = "circle",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+        collecting = state
+        print("Coleta automática: " .. tostring(state))
+    end
+})
+
+-- 🧠 Estado do toggle
+local usandoBanknote = false
+local player = game:GetService("Players").LocalPlayer
+
+-- 🏦 Função que usa o Banknote
+local function usarBanknote()
+    for _, item in pairs(player.Backpack:GetChildren()) do
+        if item.Name == "Banknote" then
+            item.Parent = player.Character
+            task.wait(0.1)
+            item:Activate()
+            print("Banknote utilizado.")
+            return
+        end
+    end
+end
+
+-- 🔁 Loop contínuo
+task.spawn(function()
+    while true do
+        if usandoBanknote then
+            pcall(usarBanknote)
+        end
+        task.wait(0.5) -- pode diminuir se quiser mais rápido
+    end
+end)
+
+local Toggle = Tab:Toggle({
+    Title = "Auto use Banknote",
+    Desc = "Use all Banknotes in your inventory",
+    Icon = "circle",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+        usandoBanknote = state
+        print("Auto Banknote: " .. tostring(state))
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Other",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Anti-Afk",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/snowbrkkkk/snow/refs/heads/main/Anti-afk"))()
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Stands",
+    Icon = "rbxassetid://18256203581",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Farm Stand Help",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+
+local Button = Tab:Button({
+    Title = "SafePlace",
+    Desc = "Teleport To Safeplace",
+    Locked = false,
+    Callback = function()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function createSafePlot()
+	if workspace:FindFirstChild("SafeBox_" .. player.UserId) then return end
+
+	local safeY = 10000
+	local center = Vector3.new(0, safeY, 0)
+
+	local model = Instance.new("Model")
+	model.Name = "SafeBox_" .. player.UserId
+	model.Parent = workspace
+
+	local function createPart(name, size, offset, rotation)
+		local part = Instance.new("Part")
+		part.Name = name
+		part.Anchored = true
+		part.CanCollide = true
+		part.Transparency = 0.5
+		part.Size = size
+		part.Position = center + offset
+		if rotation then
+			part.Orientation = rotation
+		end
+		part.Parent = model
+	end
+
+	createPart("Base", Vector3.new(21, 2, 21), Vector3.new(0, 0, 0))
+	createPart("WallFront", Vector3.new(20, 13, 2), Vector3.new(0, 6.5, 10))    -- Frente
+	createPart("WallLeft", Vector3.new(2, 13, 21), Vector3.new(-10, 6.5, 0))    -- Esquerda
+	createPart("WallBack", Vector3.new(20, 13, 2), Vector3.new(0, 6.5, -10))    -- Trás
+	-- Sem parede direita / meio
+	createPart("Roof", Vector3.new(24, 2, 24), Vector3.new(0, 13, 0))
+end
+
+local function teleportPlayer()
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	repeat task.wait() until workspace:FindFirstChild("SafeBox_" .. player.UserId)
+
+	local pos = Vector3.new(0, 10005, 0)
+	hrp.CFrame = CFrame.new(pos)
+end
+
+createSafePlot()
+task.wait(1)
+teleportPlayer()
+        print("clicked")
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Stands",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "D4C",
+    Desc = "Load D4C Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/yWBekANi"))()
+    end
+})
+
+local Button = Tab:Button({
+    Title = "OMT",
+    Desc = "Load OMT Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/JqNGUSZD"))()
+    end
+})
+
+local Button = Tab:Button({
+    Title = "TheWorld",
+    Desc = "Load TheWorld Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/M4pajxGb"))()
+    end
+})
+
+local Button = Tab:Button({
+    Title = "WhitesnakeAU",
+    Desc = "Load WhitesnakeAU Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/iX4v1cTs"))()
+    end
+})
+
+local Button = Tab:Button({
+    Title = "SoftAndWet",
+    Desc = "Load SoftAndWet Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/66KRNUqK"))()
+    end
+})
+
+local Button = Tab:Button({
+    Title = "SoftAndWet (shiny)",
+    Desc = "Farm SoftAndWet (shiny) Stand Script",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/ue9e3YLc"))()
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Shop",
+    Icon = "rbxassetid://9405933217",
+    Locked = false,
+})
+
+local running = false
+
+local Toggle = Tab:Toggle({
+    Title = "Anti-Equip",
+    Desc = "",
+    Icon = "shield",
+    Default = false,
+    Callback = function(state)
+        running = state
+
+        -- Inicia loop quando ativado
+        if running then
+            task.spawn(function()
+                while running do
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character
+                    local backpack = player:FindFirstChild("Backpack")
+
+                    if char and backpack then
+                        for _, item in ipairs(char:GetChildren()) do
+                            if item:IsA("Tool") then
+                                item.Parent = backpack
+                                print("Desequipado:", item.Name)
+                            end
+                        end
+                    end
+
+                    task.wait(0.1)
+                end
+            end)
+        end
+
+        print("Toggle está " .. (running and "ativado" or "desativado"))
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Tim's Shop",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Buy Shiny Arrow",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Shiny Arrow"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Ticket",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Ticket"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Water-chan",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Water"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Tom's Shop",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Buy Arrow",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Arrow"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Rokakaka",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Rokakaka Fruit"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Sword",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Sword"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Hamon",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Hamon"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Buy Shiny Sword",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local args = {
+	"Shiny Sword"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Uncanny Boss",
+    Icon = "rbxassetid://7485051715",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Boss",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Auto Boss",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Script Executed!",
+    Text = "Thanks to use :D",
+    Icon = "rbxassetid://11151804223", -- sua imagem aqui
+    Duration = 5
+})
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function removeDecalsFrom(objectName)
+	local obj = workspace:FindFirstChild(objectName)
+	if not obj then return end
+
+	for _, descendant in ipairs(obj:GetDescendants()) do
+		if descendant:IsA("Decal") or descendant:IsA("Texture") then
+			descendant:Destroy()
+		end
+	end
+end
+
+-- Remove decals localmente
+removeDecalsFrom("Trollprims")
+removeDecalsFrom("TrollPrisme")
+
+-- Aguarda o TrollPrism principal
+local trollPrism = workspace:WaitForChild("TrollPrism")
+
+-- Deixa o TrollPrism invisível localmente
+for _, obj in ipairs(trollPrism:GetDescendants()) do
+	if obj:IsA("BasePart") then
+		obj.LocalTransparencyModifier = 1
+		obj.CanCollide = false
+	end
+	if obj:IsA("Decal") or obj:IsA("Texture") then
+		obj:Destroy()
+	end
+end
+
+-- Cria o cubo visual
+local imageId = "85827953096548"
+local cube = Instance.new("Part")
+cube.Name = "LocalImageCube"
+cube.Size = trollPrism.Size * 1.5  -- Cubo maior
+cube.Anchored = true
+cube.CanCollide = false
+cube.Material = Enum.Material.SmoothPlastic
+cube.Parent = workspace
+
+-- Adiciona decal em todas as faces
+for _, face in ipairs(Enum.NormalId:GetEnumItems()) do
+	local decal = Instance.new("Decal")
+	decal.Face = face
+	decal.Texture = "rbxassetid://" .. imageId
+	decal.Parent = cube
+end
+
+-- Alinha o cubo com o TrollPrism
+RunService.RenderStepped:Connect(function()
+	if trollPrism and cube then
+		cube.CFrame = trollPrism.CFrame
+	end
+end)
+
+repeat task.wait() until game:IsLoaded()
+
+-- Anti-AFK
+pcall(function()
+    for _, v in pairs(getconnections(game.Players.LocalPlayer.Idled)) do
+        v:Disable()
+    end
+end)
+
+-- Serviços
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
+
+-- Variáveis do jogo
+local Time = true
+local Attacking = Workspace:WaitForChild("Dead")
+local Obby = Workspace:WaitForChild("ObbyW")
+local Phase = Workspace:WaitForChild("BossPhase")
+local Health = Workspace:WaitForChild("TrollHealth")
+
+-- Limpar efeitos
+pcall(function()
+    if Workspace:FindFirstChild("Effects") then Workspace.Effects:Destroy() end
+    if Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("ThunderParts") then
+        Workspace.Map.ThunderParts:Destroy()
+    end
+end)
+
+-- Aumentar tamanho da espada
+local function EquipAndResizeSword()
+    local sword = LocalPlayer.Backpack:FindFirstChild("KnightsSword") or Character:FindFirstChild("KnightsSword")
+    if sword then
+        sword.Parent = Character
+        task.wait(0.1)
+        pcall(function()
+            local handle = sword:FindFirstChild("Handle")
+            if handle then
+                local box = Instance.new("SelectionBox")
+                box.Name = "SelectionBoxCreated"
+                box.Parent = handle
+                box.Adornee = handle
+                handle.Massless = true
+                handle.Size = Vector3.new(20, 20, 500)
+                sword.GripPos = Vector3.new(0, 0, 0)
+            end
+        end)
+        Humanoid:UnequipTools()
+        sword.Parent = Character
+    end
+end
+EquipAndResizeSword()
+
+-- Auto-teleport
+task.spawn(function()
+    while task.wait() do
+        if not Attacking.Value then
+            if Obby.Value then
+                HumanoidRootPart.CFrame = CFrame.new(20.456, 113.245, 196.613)
+            elseif Phase.Value == "None" then
+                HumanoidRootPart.CFrame = CFrame.new(-5.47, -4.45, 248.21)
+            else
+                HumanoidRootPart.CFrame = CFrame.new(-19.89, -4.77, 142.49)
+            end
+        end
+    end
+end)
+
+-- Auto-attack
+task.spawn(function()
+    while task.wait() do
+        if not Attacking.Value and Character:FindFirstChild("KnightsSword") then
+            Character.KnightsSword:Activate()
+        end
+    end
+end)
+
+-- Health Percent Check
+local function Percent(a, b)
+    return a / b
+end
+
+Health:GetPropertyChangedSignal("Value"):Connect(function()
+    local max = Health:FindFirstChild("MaxHealth") and Health.MaxHealth.Value or 1
+    if Percent(Health.Value, max) <= 0.003 and Time then
+        Time = false
+        Humanoid:UnequipTools()
+        task.wait(1) -- tempo de espera pode ser ajustado
+        EquipAndResizeSword()
+    end
+end)
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "No cooldown",
+    Desc = "Click only once",
+    Locked = false,
+    Callback = function()
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-no-cooldown-6517"))()
+        print("clicked")
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Uncanny Boss Help",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Fullbright",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+loadstring(game:HttpGet("https://pastebin.com/raw/Dh9ePW8G"))()
+        print("clicked")
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Anti-lag",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Anti-lag-optimizer-script-38277"))()
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Map",
+    Icon = "rbxassetid://6723742952",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Teleportion",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to Bank",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(1341.83, 587.62, -554.65)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to Rachael Quests",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(1042.21, 583.26, -446.56)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to Tim",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(1398.24, 584.34, -219.32)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to Farmland",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(-285.6, 533.99, -1487.94)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to Portal",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(1129.44, 584.07, -723.08)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Teleport to D4C Map",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+-- Cria um CFrame a partir dos dados fornecidos
+local pos = Vector3.new(-3062.44336, 646.841675, -436.368134)
+
+local right = Vector3.new(-0.714356422, 0, 0.699782133)
+local up = Vector3.new(0, 1, 0)
+local back = Vector3.new(-0.699782133, 0, -0.714356422)
+
+local cf = CFrame.fromMatrix(pos, right, up, back)
+
+-- Teleporta o jogador para o centro do CFrame
+local lp = game.Players.LocalPlayer
+local char = lp.Character or lp.CharacterAdded:Wait()
+
+if char and char:FindFirstChild("HumanoidRootPart") then
+    char:WaitForChild("HumanoidRootPart").CFrame = cf + Vector3.new(0, 5, 0) -- sobe 5 studs para evitar cair no chão
+end
+        print("clicked")
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Scripts",
+    Icon = "rbxassetid://11570895459",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Only For Snowzinn Hub Team",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+-- Lista de UserIds autorizados para usar os botões
+local allowedUsers = {
+    [7992250591] = true, -- substitua pelo seu UserId
+    [8496831459] = true, -- adicione outros UserIds permitidos
+}
+
+local player = game.Players.LocalPlayer
+local isAllowed = allowedUsers[player.UserId] or false
+
+-- D4C SPAM CLONE
+local ButtonD4C = Tab:Button({
+    Title = "D4C Spam Clone",
+    Desc = "Made By Snow",
+    Locked = not isAllowed, -- bloqueado se não for permitido
+    Callback = function()
+        local rep = game:GetService("ReplicatedStorage")
+        local plr = game.Players.LocalPlayer
+
+        local function spawnClones(qtd)
+            for i = 1, qtd do
+                rep.Main.Input:FireServer("Alternate", "Clone")
+                wait(0.1)
+            end
+        end
+
+        while true do
+            spawnClones(5)
+            wait(0.1)
+        end
+
+        print("clicked")
+    end
+})
+
+-- Kill Aura Anubis
+local ButtonKillAura = Tab:Button({
+    Title = "kill aura anubis",
+    Desc = "Made by unknown",
+    Locked = not isAllowed,
+    Callback = function()
+        local function GetNearestPlr(range)
+            local players = game:GetService("Players"):GetPlayers()
+            local localPlayer = game:GetService("Players").LocalPlayer
+            local localChar = localPlayer.Character
+            if not localChar then return nil end
+            local localRoot = localChar:FindFirstChild("HumanoidRootPart")
+            if not localRoot then return nil end
+
+            local nearestPlayer = nil
+            local nearestDistance = math.huge
+
+            for _, player in ipairs(players) do
+                if player ~= localPlayer then
+                    local char = player.Character
+                    if char then
+                        local humanoid = char:FindFirstChild("Humanoid")
+                        local rootPart = char:FindFirstChild("HumanoidRootPart")
+                        if humanoid and humanoid.Health > 0 and rootPart then
+                            local distance = (localRoot.Position - rootPart.Position).Magnitude
+                            if distance <= range and distance < nearestDistance then
+                                nearestPlayer = player
+                                nearestDistance = distance
+                            end
+                        end
+                    end
+                end
+            end
+
+            return nearestPlayer
+        end
+
+        while wait() do
+            local targetplayer = GetNearestPlr(30)
+            if targetplayer then
+                pcall(function()
+                    local args = {
+                        [1] = "Damage",
+                        [2] = "StrongSlash",
+                        [4] = true,
+                        [5] = targetplayer.Character.Humanoid
+                    }
+                    game:GetService("ReplicatedStorage").Main.Input:FireServer(unpack(args))
+                end)
+            end
+        end
+
+        print("clicked")
+    end
+})
+
+-- Ice STW
+local ButtonIceSTW = Tab:Button({
+    Title = "Ice Punch (STW)",
+    Desc = "Made By Arc's Hub",
+    Locked = not isAllowed,
+    Callback = function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local player = Players.LocalPlayer
+
+        if game:GetService("CoreGui"):FindFirstChild("DamageButtonGui") then
+            game:GetService("CoreGui").DamageButtonGui:Destroy()
+        end
+
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "DamageButtonGui"
+        screenGui.Parent = game:GetService("CoreGui")
+
+        local button = Instance.new("TextButton")
+        button.Name = "DamageButton"
+        button.Parent = screenGui
+        button.Text = "Dano"
+        button.Font = Enum.Font.SourceSansBold
+        button.TextColor3 = Color3.new(1, 1, 1)
+        button.TextScaled = true
+        button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        button.AnchorPoint = Vector2.new(0.5, 0.5)
+        button.Position = UDim2.new(0.9, 0, 0.9, 0)
+        button.Size = UDim2.new(0, 80, 0, 80)
+        button.AutoButtonColor = true
+        button.BackgroundTransparency = 0
+        button.ClipsDescendants = true
+        button.BorderSizePixel = 0
+        button.TextWrapped = true
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = button
+
+        button.MouseButton1Click:Connect(function()
+            for i, v in pairs(Players:GetPlayers()) do
+                if v ~= player and v.Character and v.Character:FindFirstChild("Humanoid") then
+                    local args1 = {
+                        [1] = "Damage",
+                        [2] = "Freeze",
+                        [4] = true,
+                        [5] = v.Character.Humanoid
+                    }
+                    ReplicatedStorage.Main.Input:FireServer(unpack(args1))
+
+                    local args2 = {
+                        [1] = "Damage",
+                        [2] = "BloodSuck",
+                        [4] = true,
+                        [5] = v.Character.Humanoid
+                    }
+                    ReplicatedStorage.Main.Input:FireServer(unpack(args2))
+                end
+            end
+        end)
+
+        print("clicked")
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Scripts",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Button = Tab:Button({
+    Title = "Inf skill (Hierophant green)",
+    Locked = false,
+    Callback = function()
+        task.wait(1)
+        game.UserInputService.InputBegan:Connect(function(ip, gpe)
+            if not gpe and ip.KeyCode == Enum.KeyCode.F then
+                for i = 1, 50 do
+                    local args = {
+                        [1] = "Alternate",
+                        [2] = "EmeraldProjectile2",
+                        [3] = false,
+                        [4] = game.Players.LocalPlayer:GetMouse().Hit
+                    }
+                    game:GetService("ReplicatedStorage").Main.Input:FireServer(unpack(args))
+                end
+            end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Hitbox Reaper",
+    Locked = false,
+    Callback = function()
+        pcall(function()
+            local _1 = game
+            local _2 = _1:GetService("Players")
+            local _3 = _1:GetService("Workspace")
+            local _4 = _2.LocalPlayer
+            local _5 = _3:FindFirstChild(_4.Name)
+            if _5 and _5:FindFirstChild("Stand") and _5.Stand:FindFirstChild("Hitbox") then
+                _5.Stand.Hitbox.Size = Vector3.new(50, 7.05, 2.83)
+            else
+                warn("Não encontrou " .. _4.Name .. ".Stand.Hitbox")
+            end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "D4C Bomb Clone",
+    Locked = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local playerGui = player:WaitForChild("PlayerGui")
+
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "D4CBombCloneGui"
+        screenGui.ResetOnSpawn = false
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        screenGui.Parent = playerGui
+
+        local button = Instance.new("TextButton")
+        button.Name = "d4c_bomb_clone"
+        button.Text = "💣"
+        button.Size = UDim2.new(0, 60, 0, 60)
+        button.Position = UDim2.new(1, -80, 1, -220)
+        button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 30
+        button.BorderSizePixel = 0
+        button.AutoButtonColor = true
+        button.Parent = screenGui
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = button
+
+        button.Activated:Connect(function()
+            local character = player.Character
+            if not character then return end
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local nearestPlayer
+            local shortestDistance = math.huge
+
+            for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+                if otherPlayer ~= player and otherPlayer.Character then
+                    local otherHrp = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if otherHrp then
+                        local dist = (hrp.Position - otherHrp.Position).Magnitude
+                        if dist < shortestDistance then
+                            shortestDistance = dist
+                            nearestPlayer = otherPlayer
+                        end
+                    end
+                end
+            end
+
+            if nearestPlayer and nearestPlayer.Character then
+                local leftArm = nearestPlayer.Character:FindFirstChild("Left Arm")
+                if leftArm then
+                    game.ReplicatedStorage.Main.Input:FireServer("Alternate", "CloneBomb", leftArm)
+                    print("D4C Bomb Clone used on:", nearestPlayer.Name)
+                else
+                    warn("Target missing Left Arm!")
+                end
+            else
+                warn("No nearby players found!")
+            end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "God mode (Crazy Diamont)",
+    Locked = false,
+    Callback = function()
+        while true do
+            local args = {
+                [1] = "Damage",
+                [2] = "Punch",
+                [5] = game.Players.LocalPlayer.Character.Humanoid,
+                [6] = CFrame.new(1276.978, 582.919, -634.362) * CFrame.Angles(0.38, 0.77, 1.25),
+                [7] = true
+            }
+            game.ReplicatedStorage.Main.Input:FireServer(unpack(args))
+
+            local args2 = {
+                [1] = "Alternate",
+                [2] = "Block"
+            }
+            game.ReplicatedStorage.Main.Input:FireServer(unpack(args2))
+
+            task.wait(0.1)
+        end
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Inf Knife (STW)",
+    Locked = false,
+    Callback = function()
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "FacasControlGui"
+        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+        local botao = Instance.new("TextButton")
+        botao.Size = UDim2.new(0, 150, 0, 40)
+        botao.Position = UDim2.new(0, 10, 0, 10)
+        botao.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        botao.TextColor3 = Color3.new(1, 1, 1)
+        botao.Font = Enum.Font.SourceSansBold
+        botao.TextSize = 20
+        botao.Text = "Start Knifes"
+        botao.Parent = ScreenGui
+
+        _G.LancarFacas = false
+
+        local function iniciarFacas()
+            spawn(function()
+                while _G.LancarFacas do
+                    local args1 = {"Alternate", "Knife"}
+                    game.ReplicatedStorage.Main.Input:FireServer(unpack(args1))
+
+                    local args2 = {"Alternate", "ResetKnife"}
+                    game.ReplicatedStorage.Main.Input:FireServer(unpack(args2))
+
+                    wait(0.1)
+                end
+            end)
+        end
+
+        botao.MouseButton1Click:Connect(function()
+            _G.LancarFacas = not _G.LancarFacas
+            botao.Text = _G.LancarFacas and "Stop Knifes" or "Start Knifes"
+            if _G.LancarFacas then iniciarFacas() end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Sans Soul Ability F + W (mobile)",
+    Locked = false,
+    Callback = function()
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "CircleButtonGui"
+        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        ScreenGui.ResetOnSpawn = false
+
+        local Button = Instance.new("ImageButton")
+        Button.Name = "CircleButton"
+        Button.Parent = ScreenGui
+        Button.Position = UDim2.new(0, 20, 0, 100)
+        Button.Size = UDim2.new(0, 60, 0, 60)
+        Button.BackgroundTransparency = 1
+        Button.Image = "rbxassetid://5791744848"
+        Button.Draggable = true
+        Button.Active = true
+        Button.Selectable = true
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(1, 0)
+        UICorner.Parent = Button
+
+        Button.MouseButton1Click:Connect(function()
+            -- Envia "Alternate" e "Control"
+            local args1 = {"Alternate", "Control"}
+            game:GetService("ReplicatedStorage").Main.Input:FireServer(unpack(args1))
+
+            task.wait(2)
+
+            -- Envia "w" três vezes
+            for i = 1, 3 do
+                local args2 = {"w"}
+                game:GetService("ReplicatedStorage").Main.Input:FireServer(unpack(args2))
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Roadroller (Twgh TW)",
+    Locked = false,
+    Callback = function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- Criar GUI
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "RoadRollerGui"
+        screenGui.ResetOnSpawn = false
+        screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+        -- Criar botão circular com imagem
+        local button = Instance.new("ImageButton")
+        button.Name = "RoadRollerButton"
+        button.Image = "rbxassetid://94731220180625" -- Ícone do botão
+        button.Size = UDim2.new(0, 70, 0, 70)
+        button.Position = UDim2.new(0, 30, 0, 200)
+        button.BackgroundTransparency = 1
+        button.Parent = screenGui
+
+        -- Tornar o botão redondo
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = button
+
+        -- Drag com mouse ou touch
+        local dragging = false
+        local dragStart, startPos
+
+        button.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = button.Position
+            end
+        end)
+
+        button.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                local delta = input.Position - dragStart
+                button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+
+        button.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+
+        -- Função ROADROLLER
+        button.MouseButton1Click:Connect(function()
+            local character = LocalPlayer.Character
+            if not character then return end
+
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local nearestPlayer
+            local shortestDistance = math.huge
+
+            for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                if otherPlayer ~= LocalPlayer and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (hrp.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < shortestDistance then
+                        shortestDistance = dist
+                        nearestPlayer = otherPlayer
+                    end
+                end
+            end
+
+            if nearestPlayer and nearestPlayer.Character then
+                local args = {
+                    [1] = 60,
+                    [2] = "ROADROLLER"
+                }
+                ReplicatedStorage.Main.Timestop:FireServer(unpack(args))
+            end
+        end)
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Infinite Dio Dodge (STW)",
+    Locked = false,
+    Callback = function()
+        local args = {
+            "Alternate",
+            "STWRTZ",
+            true
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Main"):WaitForChild("Input"):FireServer(unpack(args))
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Infinite Reflect Damage (Golden Experience)",
+    Locked = false,
+    Callback = function()
+        local args = {
+            "Alternate",
+            "RTZ",
+            true
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Main"):WaitForChild("Input"):FireServer(unpack(args))
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Time Stop 15s (Need a Stand with TS)",
+    Locked = false,
+    Callback = function()
+        local args = {
+            [1] = 20;
+            [2] = "jotaro4";
+        }
+
+        game:GetService("ReplicatedStorage"):WaitForChild("Main", 9e9):WaitForChild("Timestop", 9e9):FireServer(unpack(args))
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Credits",
+    Icon = "rbxassetid://11577689639",
+    Locked = false,
+})
+
+local Section = Tab:Section({ 
+    Title = "Snowzinn Hub Team",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Owner",
+    Desc = "snowbrkkkkk",
+    Color = "Grey",
+    Image = "rbxassetid://4650320901",
+    ImageSize = 22,
+    Thumbnail = "",
+    ThumbnailSize = 22,
+    Locked = true
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Co-owner",
+    Desc = "theusbutblue",
+    Color = "Grey",
+    Image = "rbxassetid://4650320901",
+    ImageSize = 22,
+    Thumbnail = "",
+    ThumbnailSize = 22,
+    Locked = true
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Co-owner",
+    Desc = "zarthedumbass",
+    Color = "Grey",
+    Image = "rbxassetid://4650320901",
+    ImageSize = 22,
+    Thumbnail = "",
+    ThumbnailSize = 22,
+    Locked = true
+})
