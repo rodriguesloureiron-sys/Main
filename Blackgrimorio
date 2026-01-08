@@ -1,0 +1,559 @@
+local WhitelistURL = "https://raw.githubusercontent.com/rodriguesloureiron-sys/Main/refs/heads/main/Whitelist-black-grimorio" -- <--- MUDAR AQUI
+
+local PlayerHWID = gethwid and gethwid() or ""
+local Authorized = false
+
+-- Verifica a lista na internet
+local success, list = pcall(function()
+    return loadstring(game:HttpGet(WhitelistURL))()
+end)
+
+if not success or type(list) ~= "table" then
+    game.Players.LocalPlayer:Kick("Erro: Não foi possível carregar a Whitelist.")
+    return
+end
+
+-- Checa se o HWID do jogador está na lista
+for _, id in ipairs(list) do
+    if id == PlayerHWID then
+        Authorized = true
+        break
+    end
+end
+
+if Authorized then
+    -- Notificação de sucesso
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Login Aprovado",
+        Text = "Bem-vindo ao Astral Hub!",
+        Duration = 5
+    })
+
+local OrionLib = loadstring(game:HttpGet(("https://raw.githubusercontent.com/Giangplay/Script/main/Orion_Library_PE_V2.lua")))()
+local Window = OrionLib:MakeWindow({IntroText = "Black Grimoire", IntroIcon = "rbxassetid://115117464051253",Name = ("Astral Hub - Black Grimoire ".." | ".. identifyexecutor()),IntroToggleIcon = "rbxassetid://115117464051253", HidePremium = false, SaveConfig = false, IntroEnabled = true, ConfigFolder = "slap battles"})
+
+local Tab = Window:MakeTab({
+	Name = "Main",
+	Icon = "rbxassetid://124620632231839",
+	PremiumOnly = false
+})
+
+Tab:AddParagraph("Astral Hub","Use with caution.")
+
+local Section = Tab:AddSection({
+	Name = "Auto Farm"
+})
+
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local VIM = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local remote = RS:WaitForChild("MainRemote")
+
+-- Configuração Global
+getgenv().AutoFarm = false -- Começa desligado
+
+-- Constantes
+local FINAL_POS = Vector3.new(-128, -211, -1568)
+local NPC_NAME = "Yuno"
+local QUEST_TYPE = "DeliverGreenJuice"
+local targetCooldowns = {}
+
+-- Função de Compatibilidade para Executores (Solara/Wave/etc)
+local function safeTouch(part)
+    if not part then return end
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if firetouchinterest then
+        firetouchinterest(hrp, part, 0)
+        firetouchinterest(hrp, part, 1)
+    else
+        -- Fallback para executores sem firetouchinterest
+        local oldCF = hrp.CFrame
+        hrp.CFrame = part.CFrame
+        task.wait(0.1)
+        hrp.CFrame = oldCF
+    end
+end
+
+-- Anti-AFK
+player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Funções Auxiliares
+local function enableFly(hrp)
+    local bv = hrp:FindFirstChild("FarmHoldVelocity") or Instance.new("BodyVelocity")
+    bv.Name = "FarmHoldVelocity"
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.P = 1250
+    bv.Parent = hrp
+end
+
+local function findTool(name)
+    local backpack = player:FindFirstChild("Backpack")
+    local char = player.Character
+    if not backpack or not char then return nil end
+    local tool = backpack:FindFirstChild(name) or char:FindFirstChild(name)
+    if not tool and name == "GreenJuice" then
+        tool = backpack:FindFirstChild("Green Juice") or char:FindFirstChild("Green Juice")
+    end
+    return tool
+end
+
+local function getMissionValue(name)
+    local cm = player:FindFirstChild("CurrentMission")
+    if cm then
+        local quest = cm:FindFirstChild(name)
+        if quest then return quest:GetAttribute("Current") or (quest:FindFirstChild("current") and quest.current.Value) or 0 end
+    end
+    return nil
+end
+
+local function farmClickTarget(hrp, target, offset)
+    if not hrp or not target then return end
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.CFrame = CFrame.lookAt((target.CFrame * offset).Position, target.Position)
+    enableFly(hrp)
+    task.wait(0.3)
+    VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+end
+
+-- ==========================================
+-- LOOP 1: PHYSICS & TOOLS
+-- ==========================================
+task.spawn(function()
+    RunService.Heartbeat:Connect(function()
+        if not getgenv().AutoFarm then return end -- Pausa se o toggle estiver off
+        
+        local char = player.Character
+        if not char then return end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local human = char:FindFirstChild("Humanoid")
+        local backpack = player:FindFirstChild("Backpack")
+        
+        -- Noclip
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then 
+                part.CanCollide = false 
+            end
+        end
+
+        if hrp and human then
+            local tool = backpack:FindFirstChild("GreenJuice") or backpack:FindFirstChild("Green Juice")
+            if tool then human:EquipTool(tool) end
+
+            local juiceTarget = workspace.NPCs.Asta:FindFirstChild("GIVEMEJUICE")
+            if juiceTarget then
+                safeTouch(juiceTarget)
+            end
+        end
+    end)
+end)
+
+-- ==========================================
+-- LOOP 2: QUEST LOGIC
+-- ==========================================
+task.spawn(function()
+    while true do
+        if not getgenv().AutoFarm then 
+            task.wait(1) -- Espera passiva se o toggle estiver off
+        else
+            task.wait() -- Pequeno delay para não crashar
+            
+            local success, err = pcall(function()
+                local char = player.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then
+                    task.wait(1) return 
+                end
+
+                local hrp = char.HumanoidRootPart
+                local human = char.Humanoid
+                local level = player.leaderstats.Level.Value
+                local JUICE_TARGET = workspace.NPCs.Asta:FindFirstChild("GIVEMEJUICE")
+
+                -- [LOGICA DE NIVEIS]
+                if level < 20 then
+                    local p = getMissionValue("CutWoods")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="CutWoods", Type="questpls", NpcName="Father Orfi"}) task.wait(0.5) return end
+                    local axe = findTool("MAxe")
+                    if axe and axe.Parent ~= char then human:EquipTool(axe) end
+                    local map = workspace:FindFirstChild("THEMAP")
+                    if map then
+                        for _, v in ipairs(map:GetDescendants()) do
+                            if v.Name == "BREAKMEWP" and v:IsA("BasePart") then
+                                local bVal = v:FindFirstChild("Breakable")
+                                if not bVal or bVal.Value then farmClickTarget(hrp, v, CFrame.new(0,0,6)) break end
+                            end
+                        end
+                    end
+
+                elseif level < 60 then
+                    if player.CurrentMission:FindFirstChild("CutWoods") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("GetPotatoes")
+                    if not p or p >= 30 then remote:FireServer("pcgamer", {Extra="GetPotatoes", Type="questpls", NpcName="Chris"}) task.wait(0.5) return end
+                    local hoe = findTool("Hoe")
+                    if hoe and hoe.Parent ~= char then human:EquipTool(hoe) end
+                    local map = workspace:FindFirstChild("THEMAP")
+                    if map and map.HAGEPOTATOES then
+                        for _, v in ipairs(map.HAGEPOTATOES:GetChildren()) do
+                            if (v:IsA("BasePart") or v:IsA("Model")) and (not targetCooldowns[v] or os.time()-targetCooldowns[v]>30) then
+                                local part = v:IsA("Model") and v.PrimaryPart or v
+                                if part then farmClickTarget(hrp, part, CFrame.new(0,2,5)) targetCooldowns[v] = os.time() task.wait(1) break end
+                            end
+                        end
+                    end
+
+                elseif level < 125 then
+                    if player.CurrentMission:FindFirstChild("GetPotatoes") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("DeliverSteak")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="DeliverSteak", Type="questpls", NpcName="Chef Jack"}) task.wait(0.5) return end
+                    local plate = findTool("Plate")
+                    if plate and plate.Parent ~= char then human:EquipTool(plate) end
+                    local folder = workspace:FindFirstChild("WanderingNPCs")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            local touch = npc:FindFirstChild("toucharea")
+                            if touch and (not targetCooldowns[npc] or os.time()-targetCooldowns[npc]>10) then
+                                enableFly(hrp) hrp.CFrame = touch.CFrame
+                                safeTouch(touch)
+                                targetCooldowns[npc] = os.time() task.wait(1) break
+                            end
+                        end
+                    end
+
+                elseif level < 250 then
+                    if player.CurrentMission:FindFirstChild("DeliverSteak") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("DeliverGreenJuice")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="DeliverGreenJuice", Type="questpls", NpcName="Yuno"}) task.wait(0.5) return end
+                    if JUICE_TARGET then 
+                        enableFly(hrp) 
+                        hrp.CFrame = JUICE_TARGET.CFrame 
+                        hrp.AssemblyLinearVelocity = Vector3.zero 
+                        task.wait(0.5) 
+                    end
+
+                else
+                    -- LOGICA LEVEL 250+ (SPAM)
+                    if player.CurrentMission:FindFirstChild("DeliverSteak") then remote:FireServer("unquest") end
+                    
+                    enableFly(hrp)
+                    hrp.CFrame = CFrame.new(FINAL_POS)
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+
+                    for i = 1, 40 do
+                        if not getgenv().AutoFarm then break end
+                        
+                        hrp.CFrame = CFrame.new(FINAL_POS)
+
+                        pcall(function()
+                            remote:FireServer("pcgamer", {Extra = QUEST_TYPE, Type = "questpls", NpcName = NPC_NAME})
+                        end)
+                        RunService.Heartbeat:Wait() 
+
+                        pcall(function()
+                            remote:FireServer("unquest")
+                        end)
+                        RunService.Heartbeat:Wait()
+                    end
+                    
+                    task.wait(0.25) 
+                end
+            end)
+            
+            if not success then
+                warn("Erro no Farm:", err)
+                task.wait(1)
+            end
+        end
+    end
+end)
+
+-- ==========================================
+-- UI TOGGLE (Atualizado)
+-- ==========================================
+
+-- Certifique-se de que 'Tab' foi criado pela sua biblioteca antes dessa parte
+Tab:AddToggle({
+    Name = "Auto Farm 0-250 (Have Spam)",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoFarm = Value
+        print("Auto Farm state:", Value)
+    end    
+})
+
+Tab:AddButton({
+	Name = "Spam Quest  (More Faster)",
+	Callback = function()
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local VIM = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local remote = RS:WaitForChild("MainRemote")
+
+-- ==========================================
+-- CONFIGURAÇÃO (LIGA SOZINHO)
+-- ==========================================
+getgenv().AutoFarm = true -- Já começa ligado ao executar
+
+-- Constantes
+local FINAL_POS = Vector3.new(-128, -211, -1568)
+local NPC_NAME = "Yuno"
+local QUEST_TYPE = "DeliverGreenJuice"
+local targetCooldowns = {}
+
+-- Função de Compatibilidade
+local function safeTouch(part)
+    if not part then return end
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if firetouchinterest then
+        firetouchinterest(hrp, part, 0)
+        firetouchinterest(hrp, part, 1)
+    else
+        local oldCF = hrp.CFrame
+        hrp.CFrame = part.CFrame
+        task.wait(0.1)
+        hrp.CFrame = oldCF
+    end
+end
+
+-- Anti-AFK
+player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Funções Auxiliares
+local function enableFly(hrp)
+    local bv = hrp:FindFirstChild("FarmHoldVelocity") or Instance.new("BodyVelocity")
+    bv.Name = "FarmHoldVelocity"
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.P = 1250
+    bv.Parent = hrp
+end
+
+local function findTool(name)
+    local backpack = player:FindFirstChild("Backpack")
+    local char = player.Character
+    if not backpack or not char then return nil end
+    local tool = backpack:FindFirstChild(name) or char:FindFirstChild(name)
+    if not tool and name == "GreenJuice" then
+        tool = backpack:FindFirstChild("Green Juice") or char:FindFirstChild("Green Juice")
+    end
+    return tool
+end
+
+local function getMissionValue(name)
+    local cm = player:FindFirstChild("CurrentMission")
+    if cm then
+        local quest = cm:FindFirstChild(name)
+        if quest then return quest:GetAttribute("Current") or (quest:FindFirstChild("current") and quest.current.Value) or 0 end
+    end
+    return nil
+end
+
+local function farmClickTarget(hrp, target, offset)
+    if not hrp or not target then return end
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.CFrame = CFrame.lookAt((target.CFrame * offset).Position, target.Position)
+    enableFly(hrp)
+    task.wait(0.3)
+    VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+end
+
+-- ==========================================
+-- LOOP 1: FÍSICA E FERRAMENTAS
+-- ==========================================
+task.spawn(function()
+    RunService.Heartbeat:Connect(function()
+        if not getgenv().AutoFarm then return end
+        
+        local char = player.Character
+        if not char then return end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local human = char:FindFirstChild("Humanoid")
+        local backpack = player:FindFirstChild("Backpack")
+        
+        -- Noclip
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then 
+                part.CanCollide = false 
+            end
+        end
+
+        if hrp and human then
+            local tool = backpack:FindFirstChild("GreenJuice") or backpack:FindFirstChild("Green Juice")
+            if tool then human:EquipTool(tool) end
+
+            local juiceTarget = workspace.NPCs.Asta:FindFirstChild("GIVEMEJUICE")
+            if juiceTarget then
+                safeTouch(juiceTarget)
+            end
+        end
+    end)
+end)
+
+-- ==========================================
+-- LOOP 2: LÓGICA DE QUESTS
+-- ==========================================
+task.spawn(function()
+    while true do
+        if not getgenv().AutoFarm then 
+            task.wait(1)
+        else
+            task.wait()
+            
+            local success, err = pcall(function()
+                local char = player.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then
+                    task.wait(1) return 
+                end
+
+                local hrp = char.HumanoidRootPart
+                local human = char.Humanoid
+                local level = player.leaderstats.Level.Value
+                local JUICE_TARGET = workspace.NPCs.Asta:FindFirstChild("GIVEMEJUICE")
+
+                -- LEVEL 0-20
+                if level < 20 then
+                    local p = getMissionValue("CutWoods")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="CutWoods", Type="questpls", NpcName="Father Orfi"}) task.wait(0.5) return end
+                    local axe = findTool("MAxe")
+                    if axe and axe.Parent ~= char then human:EquipTool(axe) end
+                    local map = workspace:FindFirstChild("THEMAP")
+                    if map then
+                        for _, v in ipairs(map:GetDescendants()) do
+                            if v.Name == "BREAKMEWP" and v:IsA("BasePart") then
+                                local bVal = v:FindFirstChild("Breakable")
+                                if not bVal or bVal.Value then farmClickTarget(hrp, v, CFrame.new(0,0,6)) break end
+                            end
+                        end
+                    end
+
+                -- LEVEL 20-60
+                elseif level < 60 then
+                    if player.CurrentMission:FindFirstChild("CutWoods") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("GetPotatoes")
+                    if not p or p >= 30 then remote:FireServer("pcgamer", {Extra="GetPotatoes", Type="questpls", NpcName="Chris"}) task.wait(0.5) return end
+                    local hoe = findTool("Hoe")
+                    if hoe and hoe.Parent ~= char then human:EquipTool(hoe) end
+                    local map = workspace:FindFirstChild("THEMAP")
+                    if map and map.HAGEPOTATOES then
+                        for _, v in ipairs(map.HAGEPOTATOES:GetChildren()) do
+                            if (v:IsA("BasePart") or v:IsA("Model")) and (not targetCooldowns[v] or os.time()-targetCooldowns[v]>30) then
+                                local part = v:IsA("Model") and v.PrimaryPart or v
+                                if part then farmClickTarget(hrp, part, CFrame.new(0,2,5)) targetCooldowns[v] = os.time() task.wait(1) break end
+                            end
+                        end
+                    end
+
+                -- LEVEL 60-125
+                elseif level < 125 then
+                    if player.CurrentMission:FindFirstChild("GetPotatoes") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("DeliverSteak")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="DeliverSteak", Type="questpls", NpcName="Chef Jack"}) task.wait(0.5) return end
+                    local plate = findTool("Plate")
+                    if plate and plate.Parent ~= char then human:EquipTool(plate) end
+                    local folder = workspace:FindFirstChild("WanderingNPCs")
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            local touch = npc:FindFirstChild("toucharea")
+                            if touch and (not targetCooldowns[npc] or os.time()-targetCooldowns[npc]>10) then
+                                enableFly(hrp) hrp.CFrame = touch.CFrame
+                                safeTouch(touch)
+                                targetCooldowns[npc] = os.time() task.wait(1) break
+                            end
+                        end
+                    end
+
+                -- LEVEL 125-250
+                elseif level < 250 then
+                    if player.CurrentMission:FindFirstChild("DeliverSteak") then remote:FireServer("unquest") task.wait(0.5) return end
+                    local p = getMissionValue("DeliverGreenJuice")
+                    if not p or p >= 5 then remote:FireServer("pcgamer", {Extra="DeliverGreenJuice", Type="questpls", NpcName="Yuno"}) task.wait(0.5) return end
+                    if JUICE_TARGET then 
+                        enableFly(hrp) 
+                        hrp.CFrame = JUICE_TARGET.CFrame 
+                        hrp.AssemblyLinearVelocity = Vector3.zero 
+                        task.wait(0.5) 
+                    end
+
+                -- LEVEL 250+ (SPAM QUEST)
+                else
+                    if player.CurrentMission:FindFirstChild("DeliverSteak") then remote:FireServer("unquest") end
+                    
+                    enableFly(hrp)
+                    hrp.CFrame = CFrame.new(FINAL_POS)
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+
+                    for i = 1, 40 do
+                        if not getgenv().AutoFarm then break end
+                        
+                        hrp.CFrame = CFrame.new(FINAL_POS)
+
+                        pcall(function()
+                            remote:FireServer("pcgamer", {Extra = QUEST_TYPE, Type = "questpls", NpcName = NPC_NAME})
+                        end)
+                        RunService.Heartbeat:Wait() 
+
+                        pcall(function()
+                            remote:FireServer("unquest")
+                        end)
+                        RunService.Heartbeat:Wait()
+                    end
+                    
+                    task.wait(0.25) 
+                end
+            end)
+            
+            if not success then
+                warn("Erro no Farm:", err)
+                task.wait(1)
+            end
+        end
+    end
+end)
+
+      		print("button pressed")
+  	end    
+})
+
+--[[
+Name = <string> - The name of the button.
+Callback = <function> - The function of the button.
+]]
+
+local TabCredits = Window:MakeTab({
+	Name = "Credits",
+	Icon = "rbxassetid://4492476121",
+	PremiumOnly = false
+})
+
+TabCredits:AddLabel("made by snowbrkkkkk")
+
+OrionLib:Init()
+
+else
+    -- O QUE ACONTECE SE NÃO TIVER PERMISSÃO
+    game.Players.LocalPlayer:Kick("Acesso negado! Seu HWID foi copiado: " .. PlayerHWID)
+    setclipboard(PlayerHWID) -- Copia o HWID para a área de transferência do usuário
+end
